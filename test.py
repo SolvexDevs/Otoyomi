@@ -1,4 +1,6 @@
 import requests
+from pydub import AudioSegment
+import io
 
 # テキストをファイルに書き込む
 text = "こんにちは、音声合成の世界へようこそ"
@@ -22,8 +24,11 @@ synthesis_headers = {"Content-Type": "application/json"}
 with open("query.json", "r", encoding="utf-8") as file:
     synthesis_data = file.read()
 
-synthesis_response = requests.post(synthesis_url, headers=synthesis_headers, data=synthesis_data)
+synthesis_response = requests.post(synthesis_url, headers=synthesis_headers, params={"speaker": 1}, data=synthesis_data)
 
-# 音声ファイルを保存
-with open("audio.wav", "wb") as file:
-    file.write(synthesis_response.content)
+# 24000Hz で生成された音声を読み込み、44100Hz に変換
+original_audio = AudioSegment.from_wav(io.BytesIO(synthesis_response.content))
+resampled_audio = original_audio.set_frame_rate(44100)
+
+# 変換後の音声ファイルを保存
+resampled_audio.export("audio_44100.wav", format="wav")
